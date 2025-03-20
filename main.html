@@ -30,13 +30,69 @@
 
 <script>
   const msg = new SpeechSynthesisUtterance();
-  let voices = [];
-  const voicesDropdown = document.querySelector('[name="voice"]');
-  const options = document.querySelectorAll('[type="range"], [name="text"]');
-  const speakButton = document.querySelector('#speak');
-  const stopButton = document.querySelector('#stop');
+let voices = [];
+const voicesDropdown = document.querySelector('[name="voice"]');
+const options = document.querySelectorAll('[type="range"], [name="text"]');
+const speakButton = document.querySelector('#speak');
+const stopButton = document.querySelector('#stop');
 
-  //Your code goes here
+// Initialize default text from textarea
+msg.text = document.querySelector('[name="text"]').value;
+
+// Function to populate voices dropdown
+function populateVoices() {
+  // Get all available voices
+  voices = speechSynthesis.getVoices();
+  
+  // Create options for the dropdown
+  voicesDropdown.innerHTML = voices
+    .map(voice => `<option value="${voice.name}">${voice.name} (${voice.lang})</option>`)
+    .join('');
+}
+
+// Function to set the selected voice
+function setVoice() {
+  // Find the voice that matches the selected option
+  msg.voice = voices.find(voice => voice.name === this.value);
+  
+  // If speech is currently in progress, restart it with the new voice
+  if (speechSynthesis.speaking) {
+    toggle();
+  }
+}
+
+// Function to toggle speech (start or restart)
+function toggle(startOver = true) {
+  // Stop any ongoing speech
+  speechSynthesis.cancel();
+  
+  // Start new speech if requested
+  if (startOver && msg.text.trim() !== '') {
+    speechSynthesis.speak(msg);
+  }
+}
+
+// Function to set speech options (rate, pitch, text)
+function setOption() {
+  // Update the corresponding property of the speech utterance
+  msg[this.name] = this.value;
+  
+  // If speech is in progress, restart it with new settings
+  if (speechSynthesis.speaking) {
+    toggle();
+  }
+}
+
+// Event listeners
+speechSynthesis.addEventListener('voiceschanged', populateVoices);
+voicesDropdown.addEventListener('change', setVoice);
+options.forEach(option => option.addEventListener('change', setOption));
+speakButton.addEventListener('click', () => toggle());
+stopButton.addEventListener('click', () => toggle(false));
+
+// Initial call to populate voices
+// This is needed because in some browsers, voices might be available immediately
+populateVoices();
 </script>
 
 </body>
